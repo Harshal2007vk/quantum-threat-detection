@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Threat Detection System</title>
+  <meta name="description" content="Quantum-inspired threat detection system using Qiskit simulation for cybersecurity analysis">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #050a18;
+      --bg-secondary: #0a1628;
+      --bg-card: rgba(15, 25, 50, 0.7);
+      --border-subtle: rgba(56, 189, 248, 0.12);
+      --border-glow: rgba(56, 189, 248, 0.3);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #6366f1;
+      --accent-purple: #a78bfa;
+      --accent-green: #34d399;
+      --accent-red: #f87171;
+      --accent-amber: #fbbf24;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --font-sans: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .bg-orb {
+      position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.15; z-index: 0;
+      animation: float 20s ease-in-out infinite;
+    }
+    .bg-orb-1 { width: 500px; height: 500px; background: var(--accent-blue); top: -100px; left: -100px; }
+    .bg-orb-2 { width: 400px; height: 400px; background: var(--accent-cyan); bottom: -50px; right: -50px; animation-delay: -7s; }
+    .bg-orb-3 { width: 300px; height: 300px; background: var(--accent-purple); top: 40%; left: 50%; animation-delay: -14s; }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -40px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 48px; }
+    .header-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25);
+      font-size: 12px; font-weight: 600; color: var(--accent-purple);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;
+    }
+    .header-badge .pulse {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .header h1 {
+      font-size: clamp(32px, 5vw, 48px); font-weight: 800; line-height: 1.1;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 12px;
+    }
+    .header p { font-size: 16px; color: var(--text-secondary); max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      padding: 36px;
+      margin-bottom: 28px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .glass-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.06);
+    }
+
+    /* Analyzer Card */
+    .analyzer-title {
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .analyzer-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, var(--border-subtle), transparent);
+    }
+    .input-group {
+      display: flex; gap: 12px; align-items: stretch;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .input-wrapper {
+      position: relative; flex: 1; min-width: 200px; max-width: 360px;
+    }
+    .input-wrapper input {
+      width: 100%; padding: 16px 20px; border-radius: 14px;
+      background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-subtle);
+      color: var(--text-primary); font-family: var(--font-mono); font-size: 16px;
+      transition: border-color 0.3s, box-shadow 0.3s; outline: none;
+    }
+    .input-wrapper input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+    .input-wrapper input::placeholder { color: var(--text-muted); font-family: var(--font-sans); font-size: 14px; }
+
+    .btn-analyze {
+      padding: 16px 36px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      color: white; font-family: var(--font-sans); font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: transform 0.2s, box-shadow 0.3s;
+      display: flex; align-items: center; gap: 8px;
+      white-space: nowrap;
+    }
+    .btn-analyze:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3);
+    }
+    .btn-analyze:active { transform: translateY(0); }
+    .btn-analyze.loading { pointer-events: none; opacity: 0.7; }
+    .btn-analyze .spinner {
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%; display: none;
+      animation: spin 0.8s linear infinite;
+    }
+    .btn-analyze.loading .spinner { display: block; }
+    .btn-analyze.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Slider */
+    .slider-container { margin-top: 20px; text-align: center; }
+    .slider-label { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; display: flex; justify-content: space-between; }
+    input[type="range"] {
+      -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-amber), var(--accent-red));
+      outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+      background: white; border: 3px solid var(--accent-cyan);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); cursor: pointer;
+      transition: transform 0.2s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* Result */
+    .result-area {
+      margin-top: 28px; padding: 24px; border-radius: 16px;
+      background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-subtle);
+      min-height: 70px; display: none; animation: fadeIn 0.4s ease;
+    }
+    .result-area.visible { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .result-status {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+    }
+    .status-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .status-icon.safe { background: rgba(52, 211, 153, 0.12); }
+    .status-icon.threat { background: rgba(248, 113, 113, 0.12); }
+    .status-label { font-size: 20px; font-weight: 700; }
+    .status-label.safe { color: var(--accent-green); }
+    .status-label.threat { color: var(--accent-red); }
+    .status-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .result-metrics {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px; margin-top: 16px;
+    }
+    .metric {
+      padding: 14px; border-radius: 12px;
+      background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    .metric-value { font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--accent-cyan); }
+    .metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    .confidence-bar-container { margin-top: 16px; }
+    .confidence-bar-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .confidence-bar {
+      height: 8px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden;
+    }
+    .confidence-bar-fill {
+      height: 100%; border-radius: 4px; transition: width 0.8s ease;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+    }
+    .confidence-bar-fill.threat {
+      background: linear-gradient(90deg, var(--accent-amber), var(--accent-red));
+    }
+
+    .result-error {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--accent-red); font-weight: 500;
+    }
+
+    /* Info Cards Grid */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+    .info-card-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+    }
+    .info-card-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .info-card-icon.uses { background: rgba(251, 191, 36, 0.12); }
+    .info-card-icon.apps { background: rgba(99, 102, 241, 0.12); }
+    .info-card-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+    .info-list { list-style: none; }
+    .info-list li {
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: var(--text-secondary); line-height: 1.5;
+      transition: color 0.2s;
+    }
+    .info-list li:last-child { border-bottom: none; }
+    .info-list li:hover { color: var(--text-primary); }
+    .info-list li .li-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* Quantum Circuit Visualization */
+    .circuit-vis {
+      margin-top: 16px; padding: 20px; border-radius: 12px;
+      background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle);
+      font-family: var(--font-mono); font-size: 13px; color: var(--accent-cyan);
+      overflow-x: auto; display: none;
+    }
+    .circuit-vis.visible { display: block; animation: fadeIn 0.4s ease; }
+    .circuit-line { white-space: pre; line-height: 1.8; }
+
+    /* Footer */
+    .footer {
+      text-align: center; margin-top: 60px; padding-top: 28px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 13px; color: var(--text-muted);
+    }
+    .footer a { color: var(--accent-cyan); text-decoration: none; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .app { padding: 24px 16px 60px; }
+      .glass-card { padding: 24px 18px; }
+      .input-group { flex-direction: column; align-items: stretch; }
+      .btn-analyze { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-badge"><span class="pulse"></span> System Online</div>
+    <h1>Quantum Threat Detection</h1>
+    <p>Analyze input signals using quantum-inspired probabilistic simulation for real-time threat classification</p>
+  </header>
+
+  <!-- Analyzer -->
+  <div class="glass-card" id="analyzer-card">
+    <div class="analyzer-title">Signal Analyzer</div>
+    <div class="input-group">
+      <div class="input-wrapper">
+        <input type="number" id="value" placeholder="Enter signal value (0 – 1)" step="0.01" min="0" max="1">
+      </div>
+      <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
+        <div class="spinner"></div>
+        <span class="btn-text">⚡ Analyze</span>
+      </button>
+    </div>
+    <div class="slider-container">
+      <div class="slider-label"><span>0 — Safe</span><span>1 — Critical</span></div>
+      <input type="range" id="slider" min="0" max="1" step="0.01" value="0.5" oninput="syncSlider()">
+    </div>
+
+    <!-- Result -->
+    <div class="result-area" id="resultArea"></div>
+
+    <!-- Circuit Visualization -->
+    <div class="circuit-vis" id="circuitVis"></div>
+  </div>
+
+  <!-- Info Cards -->
+  <div class="cards-grid">
+    <div class="glass-card">
+      <div class="info-card-header">
+        <div class="info-card-icon uses">💡</div>
+        <div class="info-card-title">Uses</div>
+      </div>
+      <ul class="info-list">
+        <li><span class="li-icon">🔍</span> Detect abnormal behavior in systems</li>
+        <li><span class="li-icon">🎲</span> Simulate probabilistic decision-making</li>
+        <li><span class="li-icon">⚛️</span> Quantum-inspired computing concepts</li>
+        <li><span class="li-icon">📚</span> Educational cybersecurity + quantum tool</li>
+      </ul>
+    </div>
+    <div class="glass-card">
+      <div class="info-card-header">
+        <div class="info-card-icon apps">🌍</div>
+        <div class="info-card-title">Real-World Applications</div>
+      </div>
+      <ul class="info-list">
+        <li><span class="li-icon">🔐</span> Cybersecurity threat detection</li>
+        <li><span class="li-icon">🏦</span> Fraud detection in banking</li>
+        <li><span class="li-icon">📡</span> Intrusion detection in cloud infra</li>
+        <li><span class="li-icon">📊</span> Quantitative risk analysis</li>
+        <li><span class="li-icon">🤖</span> AI + Quantum hybrid systems</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Powered by <a href="https://qiskit.org" target="_blank">Qiskit</a> &amp; FastAPI &mdash; Quantum Threat Detection v1.0
+  </footer>
+</div>
+
+<script>
+function syncSlider() {
+  document.getElementById('value').value = document.getElementById('slider').value;
+}
+document.getElementById('value').addEventListener('input', function() {
+  const v = parseFloat(this.value);
+  if (!isNaN(v) && v >= 0 && v <= 1) document.getElementById('slider').value = v;
+});
+
+async function analyze() {
+  const value = document.getElementById('value').value;
+  const resultArea = document.getElementById('resultArea');
+  const circuitVis = document.getElementById('circuitVis');
+  const btn = document.getElementById('analyzeBtn');
+
+  if (value === '' || value < 0 || value > 1) {
+    resultArea.className = 'result-area visible';
+    resultArea.innerHTML = '<div class="result-error">⚠️ Please enter a value between 0 and 1</div>';
+    circuitVis.className = 'circuit-vis';
+    return;
+  }
+
+  btn.classList.add('loading');
+  resultArea.className = 'result-area visible';
+  resultArea.innerHTML = '<div style="text-align:center;color:var(--text-muted)">⏳ Running quantum simulation...</div>';
+  circuitVis.className = 'circuit-vis';
+
+  try {
+    const res = await fetch('http://localhost:8000/detect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: parseFloat(value) })
+    });
+    if (!res.ok) throw new Error('Server error');
+    const data = await res.json();
+
+    const isThreat = data.threat;
+    const conf = (data.confidence * 100).toFixed(1);
+    const c0 = data.details['0'];
+    const c1 = data.details['1'];
+
+    resultArea.innerHTML = `
+      <div class="result-status">
+        <div class="status-icon ${isThreat ? 'threat' : 'safe'}">${isThreat ? '🚨' : '✅'}</div>
+        <div>
+          <div class="status-label ${isThreat ? 'threat' : 'safe'}">${isThreat ? 'THREAT DETECTED' : 'SYSTEM SAFE'}</div>
+          <div class="status-sub">Quantum simulation complete — ${isThreat ? 'anomalous pattern found' : 'no anomaly detected'}</div>
+        </div>
+      </div>
+      <div class="confidence-bar-container">
+        <div class="confidence-bar-label"><span>Confidence</span><span>${conf}%</span></div>
+        <div class="confidence-bar"><div class="confidence-bar-fill ${isThreat ? 'threat' : ''}" style="width:${conf}%"></div></div>
+      </div>
+      <div class="result-metrics">
+        <div class="metric"><div class="metric-value">${c0}</div><div class="metric-label">|0⟩ States</div></div>
+        <div class="metric"><div class="metric-value">${c1}</div><div class="metric-label">|1⟩ States</div></div>
+        <div class="metric"><div class="metric-value">${parseFloat(value).toFixed(2)}</div><div class="metric-label">Input Signal</div></div>
+      </div>
+    `;
+
+    // Show circuit visualization
+    const gate = parseFloat(value) > 0.5 ? 'X → H' : 'H';
+    circuitVis.className = 'circuit-vis visible';
+    circuitVis.innerHTML = `<div class="circuit-line">┌---------------------------------------------------------------------┐</div>
+                            <div class="circuit-line">│  Quantum Circuit (1 qubit)                                          │</div>
+                            <div class="circuit-line">├---------------------------------------------------------------------┤</div>
+                            <div class="circuit-line">│  q₀: ─${parseFloat(value) > 0.5 ? '[X]─[H]' : '────[H]'}─── Measure │</div>
+                            <div class="circuit-line">│  Gates: ${gate.padEnd(18)}------------------------------------------│</div>
+                            <div class="circuit-line">│  Shots: 100               ------------------------------------------│</div>
+                            <div class="circuit-line">└=====================================================================┘</div>`;
+
+  } catch (e) {
+    resultArea.innerHTML = '<div class="result-error">❌ Backend not running. Start with: <code style="color:var(--accent-cyan)">uvicorn main:app --reload</code></div>';
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+</script>
+
+</body>
+</html>
+
+
