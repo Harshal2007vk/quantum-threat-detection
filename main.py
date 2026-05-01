@@ -54,3 +54,8 @@ async def detect(data: DataInput):
 async def serve_ui():
     file_path = os.path.join(os.path.dirname(__file__), "index.html")
     return FileResponse(file_path)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
